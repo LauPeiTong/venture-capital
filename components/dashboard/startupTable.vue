@@ -2,7 +2,7 @@
   v-row.justify-center.mx-auto
     v-card.pa-4.rounded-lg
       v-card-title
-        p.mb-0 Startup List
+        p.mb-0 Investment Prediction
         v-spacer
       hr.mt-4
         //- v-text-field(
@@ -19,6 +19,7 @@
         :items="startups"
         :search="search"
         multi-sort
+        @click:row="onRowClick"
       )
 
         template(v-slot:body.prepend)
@@ -39,13 +40,16 @@
                     class="grey--text text-caption"
                   ) (+{{ categories.length - 2 }} others)
             td.py-4
-              v-text-field(v-model="revenue" type="number" label="More than" hide-details="auto" dense outlined)
+              v-text-field(v-model="num_founders" type="number" label="More than" hide-details="auto" dense outlined)
 
             td.py-4
-              v-text-field(v-model="epit" type="number" label="More than" hide-details="auto" dense outlined)
+              v-text-field(v-model="num_shareholders" type="number" label="More than" hide-details="auto" dense outlined)
 
             td.py-4
-              v-text-field(v-model="revenue_growh" type="number" label="More than" hide-details="auto" dense outlined)
+              v-select.select-category(:items="statusList" label="Select a category" v-model="status" hide-details="auto" multiple chips dense outlined)
+                template(v-slot:selection="{ item, index }")
+                  v-chip(:color="item == 'Investable'? '#3d9970' : '#FF6B6C'" outlined)
+                    span {{ item }}
 
         template(v-slot:item.name_c="{ item, index }")
           p.mb-0.font-weight-bold Company {{ index + 1}}
@@ -56,6 +60,12 @@
         template(v-slot:item.total_funding_c="{ item }")
           p.mb-0 {{ $formatCurrency(item.total_funding_c) }}
 
+        template(v-slot:item.num_founders="{ item }")
+          p.mb-0 {{ parseInt(item.num_founders) }}
+
+        template(v-slot:item.num_shareholders="{ item }")
+          p.mb-0 {{ parseInt(item.num_shareholders) }}
+
         template(v-slot:item.categories="{ item }")
           div(v-for="c in $strToList(item.categories)")
             v-chip.my-1(
@@ -65,29 +75,19 @@
             )
               p.mb-0 {{ c }}
 
-        template(v-slot:item.revenue_c="{ item }")
-          p.mb-0 {{ $formatCurrency(item.revenue_c) }}
-        template(v-slot:item.EBIT_c="{ item }")
-          div(v-if="item.EBIT_c < 0")
-            p.mb-0.danger--text {{ $formatCurrency(item.EBIT_c) }}
-          div(v-if="item.EBIT_c == 0")
-            p.mb-0 {{ $formatCurrency(item.EBIT_c) }}
-          div(v-if="item.EBIT_c > 0")
-            p.mb-0.green--text {{ $formatCurrency(item.EBIT_c) }}
-
-        template(v-slot:item.revenue_growh="{ item }")
-          div(v-if="item.revenue_growh < 0")
-            p.mb-0.danger--text {{ item.revenue_growh }}%
-          div(v-if="item.revenue_growh == 0")
-            p.mb-0 {{ item.revenue_growh }}%
-          div(v-if="item.revenue_growh > 0")
-            p.mb-0.green--text {{ item.revenue_growh }}%
+        template(v-slot:item.predicted_status="{ item }")
+          v-chip.my-1(
+            :color="item.predicted_status == 'Investable'? '#3d9970' : '#FF6B6C'"
+            outlined
+            pill
+          )
+            p.mb-0 {{ item.predicted_status }}
 
 </template>
 
 <script>
 export default {
-  name: 'ToolTable',
+  name: 'StartupTable',
   data () {
     return {
       search: '',
@@ -95,9 +95,13 @@ export default {
       incorporated_year: '',
       total_funding: '',
       categories: [],
-      revenue: '',
-      epit: '',
-      revenue_growh: '',
+      status: [],
+      num_shareholders: '',
+      num_founders: '',
+      statusList: [
+        'Investable',
+        'Not Investable'
+      ],
       categoriesList: [
         'All',
         'Transportation',
@@ -245,37 +249,31 @@ export default {
           }
         },
         {
-          text: 'Revenue',
-          align: 'end',
-          value: 'revenue_c',
-          width: '12%',
+          text: 'Number of Founder',
+          align: 'center',
+          value: 'num_founders',
           filter: (value) => {
-            if (!this.revenue) { return true }
-            return value > parseInt(this.revenue)
+            if (!this.num_founders) { return true }
+            return value > parseInt(this.num_founders)
           }
         },
         {
-          text: 'EPIT',
-          align: 'end',
-          value: 'EBIT_c',
-          width: '13%',
+          text: 'Number of Shareholders',
+          value: 'num_shareholders',
+          align: 'center',
           filter: (value) => {
-            if (!this.epit) { return true }
-            return value > parseInt(this.epit)
-          }
-        },
-        {
-          text: 'Revenue Growth',
-          align: 'end',
-          value: 'revenue_growh',
-          filter: (value) => {
-            if (!this.revenue_growh) { return true }
-            return value > parseInt(this.revenue_growh)
+            if (!this.num_shareholders) { return true }
+            return value > parseInt(this.num_shareholders)
           }
         },
         {
           text: 'Prediction',
-          value: 'status'
+          align: 'center',
+          value: 'predicted_status',
+          filter: (value) => {
+            if (this.status.length === 0) { return true }
+            return this.status.includes(value)
+          }
         }
       ],
       startups: require('../../assets/data/data.json')
@@ -292,6 +290,9 @@ export default {
       } else {
         return this.$vuetify.theme.themes.primary
       }
+    },
+    onRowClick (item) {
+      this.$router.push('/company')
     }
   }
 }

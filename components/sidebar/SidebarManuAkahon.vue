@@ -345,7 +345,7 @@ export default {
   },
   methods: {
     checkRoute (link) {
-      if (link === '/tools' && this.$route.name === 'tooldetails') { return true }
+      if (link === '/dashboard' && this.$route.name === 'company') { return true }
       return ('/' + this.$route.name) === link
     },
     tooltipAttached () {
