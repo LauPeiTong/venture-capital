@@ -1,4 +1,4 @@
-# venture-capital
+# Seedify
 
 ## Build Setup
 
